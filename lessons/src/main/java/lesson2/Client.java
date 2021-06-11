@@ -6,20 +6,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 
 public class Client extends JFrame {
 
-        private JTextArea chatArea;
-        private JTextField msgInputField;
-
+    private static JTextArea chatArea;
+        private static JTextField msgInputField;
         private static Socket socket = new Socket();
         private static DataOutputStream outputStream;
         private static DataInputStream inputStream;
+        private File chatLog = new File("chatLog.txt");
 
         public Client() {
             try {
@@ -71,7 +68,6 @@ public class Client extends JFrame {
                     }
                 }
             });
-
             setVisible(true);
         }
 
@@ -83,7 +79,6 @@ public class Client extends JFrame {
                     msgInputField.grabFocus();
                 } catch (IOException e) {
                     e.printStackTrace();
-
                 }
             }
         }
@@ -99,7 +94,8 @@ public class Client extends JFrame {
                     try {
                         while (true){
                             String strFromServer = inputStream.readUTF();
-                            if(strFromServer.equals(ChatConstants.AUTH_OK)){
+                            if(strFromServer.startsWith(ChatConstants.AUTH_OK)){
+                                inputStream();
                                 break;
                             }
                             chatArea.append(strFromServer);
@@ -125,7 +121,7 @@ public class Client extends JFrame {
             }).start();
         }
 
-        public static void closeConnection() {
+        public void closeConnection() {
             try {
                 inputStream.close();
             } catch (IOException e) {
@@ -143,7 +139,37 @@ public class Client extends JFrame {
             }
         }
 
-        public static void main(String[] args) {
+    public boolean inputStream() throws IOException {
+        int lines = 100;
+        int lineNumber = 0;
+        try (FileReader fileReader = new FileReader(chatLog)){
+                LineNumberReader lineNumberReader = new LineNumberReader(fileReader);
+                while (lineNumberReader.readLine() != null){
+                    lineNumber++;
+                }
+        }
+        try (FileInputStream fileInputStream = new FileInputStream(new File("chatLog.txt"));
+             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream))){
+            for(int i = 0; i < lineNumber; i++){
+                String line = bufferedReader.readLine();
+                if(i >= lineNumber - lines){
+                    chatArea.append(line + "\n");
+                }
+            }
+        }
+        return true;
+    }
+
+    public static void outputStream(String name, String message) throws IOException {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(new File("chatLog.txt"),true)){
+            String str = "<" + name + "> : " + message + "\n";
+            fileOutputStream.write(str.getBytes());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
                     new Client();
         }
     }

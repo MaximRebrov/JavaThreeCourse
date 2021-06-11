@@ -8,26 +8,22 @@ import java.util.List;
 
 public class MyServer {
 
-
-
     private List<ClientHandler> clients;
-
     private AuthService authService;
-
     public AuthService getAuthService(){
         return authService;
     }
 
     public MyServer(){
         try (ServerSocket server = new ServerSocket(ChatConstants.PORT)){
-            authService = new BaseAuthService();
+            authService = new DataBaseAuthService();
             authService.start();
             clients = new ArrayList<>();
             while (true){
                 System.out.println("Server started. Waiting connection");
                 Socket socket = server.accept();
                 System.out.println("Client connection");
-                new ClientHandler(this, socket);
+                new ClientHandler(this, socket, authService);
             }
         } catch (IOException e) {
             System.out.println("Server error");
@@ -60,7 +56,7 @@ public class MyServer {
         clients.remove(o);
     }
 
-    public synchronized void subscribe(ClientHandler o){
+    public synchronized void subscribe(ClientHandler o) {
         clients.add(o);
     }
 
@@ -77,5 +73,5 @@ public class MyServer {
                 }
             }
         }
-        }
+    }
 }

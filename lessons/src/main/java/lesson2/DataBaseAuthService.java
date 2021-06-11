@@ -2,7 +2,7 @@ package lesson2;
 
 import java.sql.*;
 
-public class DataBaseApp {
+public class DataBaseAuthService implements AuthService{
 
     static final String DATABASE_URL = "jdbc:sqlite:javadb.db";
     static Connection connection;
@@ -19,9 +19,8 @@ public class DataBaseApp {
     }
 
     public static void main(String[] args) throws SQLException {
-        DataBaseApp databaseApp = new DataBaseApp();
-        databaseApp.createTable();
-
+        DataBaseAuthService databaseAuthService = new DataBaseAuthService();
+        databaseAuthService.createTable();
     }
 
     public void createTable() throws SQLException {
@@ -32,7 +31,8 @@ public class DataBaseApp {
         statement.execute(createTable);
     }
 
-    public String searchUser(String login, String password) throws SQLException {
+    @Override
+    public String searchUser(String login, String password) {
         String sql = String.format("SELECT nickName From person WHERE login = '%s' AND password = '%s';", login, password);
         try {
             ResultSet resultSet = statement.executeQuery(sql);
@@ -45,6 +45,8 @@ public class DataBaseApp {
         }
         return null;
     }
+
+    @Override
     public void addUser(String login, String password, String nickName){
         try (PreparedStatement preparedStatement = connection.prepareStatement("insert into person (login, password, nickName) values (?, ?, ?)")){
             preparedStatement.setString(1, login);
@@ -56,10 +58,22 @@ public class DataBaseApp {
         }
     }
 
+    @Override
     public String rename(String nickName, String odlNickName) throws SQLException {
         String sql = String.format("UPDATE person SET nickName = '%s' WHERE nickName = '%s';", nickName, odlNickName);
         statement.execute(sql);
         return nickName;
     }
+
+    @Override
+    public void start() {
+        System.out.println("Service auth started");
+    }
+
+    @Override
+    public void stop() {
+        System.out.println("Service auth stoped");
+    }
+
 }
 
