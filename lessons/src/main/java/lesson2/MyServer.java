@@ -5,11 +5,14 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MyServer {
 
     private List<ClientHandler> clients;
     private AuthService authService;
+    ExecutorService executorService = Executors.newFixedThreadPool(5);
     public AuthService getAuthService(){
         return authService;
     }
@@ -23,7 +26,7 @@ public class MyServer {
                 System.out.println("Server started. Waiting connection");
                 Socket socket = server.accept();
                 System.out.println("Client connection");
-                new ClientHandler(this, socket, authService);
+                executorService.execute(() -> new ClientHandler(this, socket, authService));
             }
         } catch (IOException e) {
             System.out.println("Server error");
@@ -33,6 +36,7 @@ public class MyServer {
         } finally {
             if(authService != null){
                 authService.stop();
+                executorService.shutdown();
             }
         }
     }
